@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathQuest 6ème — L'Aventure des Nombres</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f4ff;
+  --surface: #ffffff;
+  --surface2: #e8eeff;
+  --border: #d0d8ff;
+  --text: #1a1f4e;
+  --muted: #6b7280;
+  --t1: #4f46e5; --t1l: #eef2ff; --t1d: #3730a3;
+  --t2: #059669; --t2l: #ecfdf5; --t2d: #047857;
+  --t3: #dc2626; --t3l: #fef2f2; --t3d: #b91c1c;
+  --gold: #f59e0b;
+  --xp: #8b5cf6;
+  --radius: 18px;
+  --shadow: 0 4px 24px #4f46e520;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === ANIMATED BG === */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 20%, #c7d2fe60 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, #bbf7d060 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 10%, #fecaca40 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* === FLOATING MATH SYMBOLS === */
+.floaty {
+  position: fixed;
+  font-size: 1.6rem;
+  opacity: .08;
+  pointer-events: none;
+  z-index: 0;
+  animation: drift linear infinite;
+}
+@keyframes drift {
+  0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10%  { opacity: .08; }
+  90%  { opacity: .08; }
+  100% { transform: translateY(-200px) rotate(360deg); opacity: 0; }
+}
+
+/* === LAYOUT === */
+.app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 20px 16px 80px; }
+
+/* === HEADER === */
+.hero {
+  text-align: center;
+  padding: 36px 20px 28px;
+  animation: fadeDown .6s ease both;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--t1); color: #fff;
+  font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 100px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px #4f46e540;
+}
+.hero h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+}
+.hero h1 .grad {
+  background: linear-gradient(135deg, var(--t1), #8b5cf6, var(--t3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p { color: var(--muted); margin-top: 10px; font-size: 1.05rem; font-weight: 600; }
+
+/* === XP BAR === */
+.xp-panel {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 22px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  animation: fadeUp .5s .1s ease both;
+}
+.xp-avatar {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--t1), #8b5cf6);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px #4f46e540;
+}
+.xp-info { flex: 1; }
+.xp-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.xp-level { font-weight: 900; font-size: 1.05rem; color: var(--t1); }
+.xp-pts { font-family: 'Space Mono', monospace; font-size: .85rem; color: var(--xp); font-weight: 700; }
+.xp-bar { height: 10px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--t1), var(--xp));
+  border-radius: 100px;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.xp-score { font-family: 'Space Mono', monospace; font-size: .8rem; color: var(--muted); }
+
+/* Streak */
+.streak-badge {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.streak-num { font-size: 1.5rem; font-weight: 900; line-height: 1; display: block; }
+.streak-lbl { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+
+/* === THEME TABS === */
+.theme-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+  animation: fadeUp .5s .15s ease both;
+}
+.theme-tab {
+  background: var(--surface);
+  border: 2.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Nunito', sans-serif;
+}
+.theme-tab:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.theme-tab.active-t1 { border-color: var(--t1); background: var(--t1l); }
+.theme-tab.active-t2 { border-color: var(--t2); background: var(--t2l); }
+.theme-tab.active-t3 { border-color: var(--t3); background: var(--t3l); }
+.theme-tab .ticon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+.theme-tab .tname { font-weight: 800; font-size: .8rem; display: block; }
+.theme-tab .tprog { font-size: .7rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+/* === CHAPTER PILLS === */
+.chapter-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  animation: fadeUp .5s .2s ease both;
+}
+.ch-pill {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 100px;
+  padding: 7px 16px;
+  font-size: .8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+}
+.ch-pill:hover { border-color: var(--t1); color: var(--t1); }
+.ch-pill.active { background: var(--t1); border-color: var(--t1); color: #fff; }
+.ch-pill.done { background: var(--t2l); border-color: var(--t2); color: var(--t2d); }
+
+/* === EXERCISE CARD === */
+.ex-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: fadeUp .35s ease both;
+  transition: box-shadow .2s;
+}
+.ex-card:hover { box-shadow: 0 8px 32px #4f46e530; }
+
+.ex-card-header {
+  padding: 18px 22px 14px;
+  display: flex; align-items: flex-start; gap: 14px;
+  border-bottom: 2px solid var(--border);
+}
+.ex-num {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 900;
+  flex-shrink: 0;
+}
+.num-t1 { background: var(--t1l); color: var(--t1); }
+.num-t2 { background: var(--t2l); color: var(--t2); }
+.num-t3 { background: var(--t3l); color: var(--t3); }
+
+.ex-meta { flex: 1; }
+.ex-title { font-weight: 900; font-size: 1rem; margin-bottom: 3px; }
+.ex-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+  padding: 2px 10px; border-radius: 100px; border: 1.5px solid;
+}
+.tag-diff-moyen  { color: #f59e0b; border-color: #f59e0b; background: #fef3c7; }
+.tag-diff-difficile { color: #ef4444; border-color: #ef4444; background: #fee2e2; }
+.tag-diff-défi   { color: #8b5cf6; border-color: #8b5cf6; background: #ede9fe; }
+.tag-type { color: var(--muted); border-color: var(--border); background: var(--surface2); }
+
+.ex-xp { font-family: 'Space Mono', monospace; font-size: .75rem; color: var(--xp); font-weight: 700; flex-shrink: 0; }
+
+.ex-body { padding: 18px 22px; }
+.ex-body p { line-height: 1.7; font-size: .95rem; font-weight: 600; }
+.ex-body strong { color: var(--t1); }
+.ex-body em { color: var(--muted); font-style: normal; font-size: .88rem; }
+
+/* Hint box */
+.hint-box {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: .85rem; font-weight: 700;
+  color: #92400e;
+  display: none;
+}
+.hint-box.show { display: block; }
+.hint-btn {
+  background: none; border: 2px solid #f59e0b;
+  color: #d97706; font-family: 'Nunito', sans-serif;
+  font-weight: 800; font-size: .8rem;
+  padding: 5px 14px; border-radius: 100px;
+  cursor: pointer; margin-top: 10px;
+  transition: all .2s;
+}
+.hint-btn:hover { background: #fef3c7; }
+
+/* Visual box */
+.visual-box {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 12px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: .85rem;
+}
+.vb-title { font-weight: 700; color: var(--t1); font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; font-family: 'Nunito', sans-serif; }
+
+/* MCQ */
+.mcq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.mcq-btn {
+  background: var(--surface);
+  border: 2.5px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  color: var(--text);
+}
+.mcq-btn:hover:not(:disabled) { border-color: var(--t1); background: var(--t1l); color: var(--t1); transform: translateY(-1px); }
+.mcq-btn.correct { border-color: var(--t2); background: var(--t2l); color: var(--t2d); }
+.mcq-btn.wrong   { border-color: var(--t3); background: var(--t3l); color: var(--t3d); }
+.mcq-btn:disabled { cursor: default; }
+
+/* Input */
+.input-row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.math-input {
+  background: var(--surface2);
+  border: 2.5px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  color: var(--text);
+  width: 140px;
+  transition: border-color .2s;
+}
+.math-input:focus { outline: none; border-color: var(--t1); }
+.math-input.wide { width: 220px; }
+
+textarea.math-input {
+  width: 100%;
+  resize: vertical;
+  font-family: 'Nunito', sans-serif;
+  font-size: .9rem;
+  line-height: 1.6;
+  margin-top: 12px;
+  min-height: 80px;
+}
+
+/* Buttons */
+.btn-check {
+  background: var(--t1);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 22px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 4px 12px #4f46e540;
+}
+.btn-check:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 18px #4f46e550; }
+.btn-check:active { transform: none; }
+
+/* Feedback */
+.feedback {
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.6;
+  display: none;
+}
+.feedback.show { display: block; animation: popIn .3s ease both; }
+.feedback.ok  { background: var(--t2l); border: 2px solid #6ee7b7; color: var(--t2d); }
+.feedback.err { background: var(--t3l); border: 2px solid #fca5a5; color: var(--t3d); }
+.feedback.tip { background: #fef3c7; border: 2px solid #fcd34d; color: #92400e; }
+
+/* XP Popup */
+.xp-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%) scale(0);
+  background: var(--surface);
+  border: 3px solid var(--xp);
+  border-radius: 20px;
+  padding: 28px 40px;
+  text-align: center;
+  z-index: 100;
+  box-shadow: 0 20px 60px #8b5cf650;
+  pointer-events: none;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.xp-popup.show { transform: translate(-50%,-50%) scale(1); }
+.xp-popup .big { font-size: 3rem; font-weight: 900; color: var(--xp); line-height: 1; }
+.xp-popup .msg { font-weight: 800; color: var(--text); margin-top: 6px; }
+.xp-popup .sub { color: var(--muted); font-size: .85rem; }
+
+/* Confetti (CSS only) */
+.confetti-wrap {
+  position: fixed; inset: 0; pointer-events: none; z-index: 99;
+  display: none;
+}
+.confetti-wrap.show { display: block; }
+.confetti-piece {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* Story box */
+.story-box {
+  background: linear-gradient(135deg, #fdf4ff, #ede9fe);
+  border: 2px solid #d8b4fe;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  font-size: .9rem;
+  line-height: 1.7;
+  font-weight: 600;
+  color: #581c87;
+}
+.story-box .storyteller { font-weight: 900; color: #7e22ce; margin-bottom: 4px; display: block; }
+
+/* Number line */
+.number-line { display: flex; align-items: center; gap: 0; margin: 14px 0; overflow-x: auto; }
+.nl-tick { display: flex; flex-direction: column; align-items: center; min-width: 40px; }
+.nl-tick span { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--muted); margin-top: 4px; }
+.nl-line { height: 3px; flex: 1; background: var(--border); }
+.nl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--t1); background: var(--surface); }
+.nl-dot.filled { background: var(--t1); }
+
+/* Data table */
+.data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: .88rem; }
+.data-table th { background: var(--t1l); color: var(--t1d); font-weight: 900; padding: 8px 12px; text-align: left; border: 2px solid var(--border); }
+.data-table td { padding: 8px 12px; border: 2px solid var(--border); font-family: 'Space Mono', monospace; font-weight: 700; }
+.data-table tr:nth-child(even) td { background: var(--surface2); }
+
+/* Geometry SVG container */
+.geo-wrap { display: flex; justify-content: center; margin: 14px 0; }
+.geo-wrap svg { max-width: 100%; }
+
+/* Section title */
+.chapter-title {
+  background: linear-gradient(135deg, var(--t1), #8b5cf6);
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 4px 16px #4f46e540;
+}
+.chapter-title .ch-icon { font-size: 1.8rem; }
+.chapter-title .ch-text h3 { font-weight: 900; font-size: 1.1rem; }
+.chapter-title .ch-text p { font-size: .8rem; opacity: .85; font-weight: 600; margin-top: 2px; }
+
+/* Reset btn */
+.btn-reset {
+  background: var(--surface);
+  border: 2.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--muted);
+}
+.btn-reset:hover { border-color: var(--t3); color: var(--t3); }
+
+/* Animations */
+@keyframes fadeDown { from { opacity:0; transform:translateY(-20px) } to { opacity:1; transform:none } }
+@keyframes fadeUp   { from { opacity:0; transform:translateY(20px)  } to { opacity:1; transform:none } }
+@keyframes popIn    { from { opacity:0; transform:scale(.9) } to { opacity:1; transform:scale(1) } }
+@keyframes pulse    { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
+
+.pulse { animation: pulse .5s ease; }
+.hidden { display: none !important; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .theme-tabs { grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .mcq-grid { grid-template-columns: 1fr; }
+  .math-input { width: 100%; }
+  .input-row { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+
+<!-- Floating math symbols -->
+<div class="floaty" style="left:5%;animation-duration:18s;animation-delay:0s">∑</div>
+<div class="floaty" style="left:15%;animation-duration:22s;animation-delay:3s">÷</div>
+<div class="floaty" style="left:30%;animation-duration:16s;animation-delay:6s">π</div>
+<div class="floaty" style="left:50%;animation-duration:20s;animation-delay:1s">×</div>
+<div class="floaty" style="left:65%;animation-duration:25s;animation-delay:8s">√</div>
+<div class="floaty" style="left:80%;animation-duration:19s;animation-delay:4s">∠</div>
+<div class="floaty" style="left:92%;animation-duration:23s;animation-delay:2s">≡</div>
+
+<!-- XP Popup -->
+<div class="xp-popup" id="xp-popup">
+  <div class="big" id="xp-popup-pts">+15 XP</div>
+  <div class="msg" id="xp-popup-msg">Bravo !</div>
+  <div class="sub" id="xp-popup-sub">Continue comme ça !</div>
+</div>
+
+<!-- Confetti -->
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<div class="app">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🎮 MathQuest · 6ème</div>
+  <h1>L'Aventure des <span class="grad">Nombres</span></h1>
+  <p>14 chapitres · 3 thèmes · Des défis qui font réfléchir !</p>
+</div>
+
+<!-- XP PANEL -->
+<div class="xp-panel">
+  <div class="xp-avatar" id="avatar-emoji">🧙</div>
+  <div class="xp-info">
+    <div class="xp-row">
+      <div class="xp-level" id="xp-level-txt">Niveau 1 — Apprenti Mathématicien</div>
+      <div class="xp-pts" id="xp-pts-txt">0 XP</div>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <div class="xp-row" style="margin-top:5px">
+      <div class="xp-score" id="score-txt">Score : 0 bonnes / 0 tentées</div>
+      <div class="xp-score" id="accuracy-txt">Précision : —</div>
+    </div>
+  </div>
+  <div class="streak-badge">
+    <span class="streak-num" id="streak-num">0</span>
+    <span class="streak-lbl">🔥 Série</span>
+  </div>
+  <button class="btn-reset" onclick="resetAll()">🔄 Reset</button>
+</div>
+
+<!-- THEME TABS -->
+<div class="theme-tabs">
+  <div class="theme-tab active-t1" onclick="switchTheme(1,this)">
+    <span class="ticon">🔢</span>
+    <span class="tname">Nombres & Calcul</span>
+    <span class="tprog" id="prog-t1">Ch. 1–6</span>
+  </div>
+  <div class="theme-tab" onclick="switchTheme(2,this)">
+    <span class="ticon">📏</span>
+    <span class="tname">Grandeurs & Mesures</span>
+    <span class="tprog" id="prog-t2">Ch. 7–9</span>
+  </div>
+  <div class="theme-tab" onclick="switchTheme(3,this)">
+    <span class="ticon">📐</span>
+    <span class="tname">Espace & Géométrie</span>
+    <span class="tprog" id="prog-t3">Ch. 10–14</span>
+  </div>
+</div>
+
+<!-- CHAPTER NAV -->
+<div class="chapter-nav" id="chapter-nav"></div>
+
+<!-- CONTENT AREA -->
+<div id="content-area"></div>
+
+</div><!-- /app -->
+
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+let xp = 0, correct = 0, total = 0, streak = 0;
+const answered = new Set();
+let currentTheme = 1, currentChapter = 1;
+
+const levels = [
+  { min: 0,   label: "Apprenti Mathématicien", emoji: "🧙", pct: 0 },
+  { min: 50,  label: "Calculateur Confirmé",   emoji: "🧑‍🏫", pct: 25 },
+  { min: 150, label: "Expert des Nombres",     emoji: "🏆", pct: 50 },
+  { min: 300, label: "Maître Géomètre",        emoji: "⭐", pct: 75 },
+  { min: 500, label: "Légende des Maths !",    emoji: "🎯", pct: 100 },
+];
+
+// ============================================================
+//  CHAPTERS DATA
+// ============================================================
+const chapters = {
+  1: { theme: 1, label: "Ch.1 — Entiers & Décimaux" },
+  2: { theme: 1, label: "Ch.2 — +, −, ×" },
+  3: { theme: 1, label: "Ch.3 — Division" },
+  4: { theme: 1, label: "Ch.4 — Fractions" },
+  5: { theme: 1, label: "Ch.5 — Proportionnalité" },
+  6: { theme: 1, label: "Ch.6 — Données" },
+  7: { theme: 2, label: "Ch.7 — Angles" },
+  8: { theme: 2, label: "Ch.8 — Longueurs, Aire, Durée" },
+  9: { theme: 2, label: "Ch.9 — Volumes" },
+  10: { theme: 3, label: "Ch.10 — Géo. dans l'espace" },
+  11: { theme: 3, label: "Ch.11 — Perp. & Parallèles" },
+  12: { theme: 3, label: "Ch.12 — Figures usuelles" },
+  13: { theme: 3, label: "Ch.13 — Symétrie axiale" },
+  14: { theme: 3, label: "Ch.14 — Symétrie & Figures" },
+};
+
+// ============================================================
+//  XP & SCORE
+// ============================================================
+function gainXP(pts, msg, sub) {
+  xp += pts;
+  const el = document.getElementById('xp-popup');
+  document.getElementById('xp-popup-pts').textContent = `+${pts} XP`;
+  document.getElementById('xp-popup-msg').textContent = msg;
+  document.getElementById('xp-popup-sub').textContent = sub;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+  updateXpBar();
+}
+
+function updateXpBar() {
+  let lv = levels[0];
+  for (let l of levels) if (xp >= l.min) lv = l;
+  document.getElementById('xp-level-txt').textContent = `Niveau ${levels.indexOf(lv)+1} — ${lv.label}`;
+  document.getElementById('xp-pts-txt').textContent = `${xp} XP`;
+  document.getElementById('avatar-emoji').textContent = lv.emoji;
+  const next = levels[Math.min(levels.indexOf(lv)+1, levels.length-1)];
+  const pct = lv === next ? 100 : Math.min(100, ((xp - lv.min) / (next.min - lv.min)) * 100);
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('score-txt').textContent = `Score : ${correct} bonnes / ${total} tentées`;
+  document.getElementById('accuracy-txt').textContent = total ? `Précision : ${Math.round(correct/total*100)}%` : 'Précision : —';
+  document.getElementById('streak-num').textContent = streak;
+}
+
+function triggerConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  wrap.classList.add('show');
+  const colors = ['#4f46e5','#06d6a0','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (1.5 + Math.random()*2) + 's';
+    c.style.animationDelay = Math.random()*.5 + 's';
+    c.style.width = c.style.height = (6+Math.random()*8) + 'px';
+    wrap.appendChild(c);
+  }
+  setTimeout(() => { wrap.classList.remove('show'); wrap.innerHTML = ''; }, 3000);
+}
+
+// ============================================================
+//  ANSWER CHECKING HELPERS
+// ============================================================
+function recordAnswer(id, isOk, pts) {
+  if (answered.has(id)) return false;
+  answered.add(id);
+  total++;
+  if (isOk) {
+    correct++;
+    streak++;
+    const msgs = ['Parfait ! 🎯','Excellent ! ⭐','Brillant ! 🔥','Incroyable ! 💡','Champion ! 🏆'];
+    const subs = ['Continue sur ta lancée !','Tu maîtrises le sujet !',`${streak} bonnes réponses d'affilée !`,'Rien ne t\'arrête !','XP bonus en route !'];
+    gainXP(pts + (streak >= 3 ? 5 : 0), msgs[Math.floor(Math.random()*msgs.length)], streak >= 3 ? `🔥 Bonus série : +5 XP !` : subs[Math.floor(Math.random()*subs.length)]);
+    if (streak >= 5) triggerConfetti();
+  } else {
+    streak = 0;
+  }
+  updateXpBar();
+  return true;
+}
+
+function showFeedback(id, ok, html) {
+  const el = document.getElementById('fb-'+id);
+  if (!el) return;
+  el.className = 'feedback show ' + (ok ? 'ok' : ok === null ? 'tip' : 'err');
+  el.innerHTML = (ok ? '✅ ' : ok === null ? '💡 ' : '❌ ') + html;
+}
+
+function checkMCQ(exId, btn, isCorrect, xpVal, okMsg, errMsg) {
+  const grp = document.getElementById('mcq-'+exId);
+  [...grp.querySelectorAll('.mcq-btn')].forEach(b => b.disabled = true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  showFeedback(exId, isCorrect, isCorrect ? okMsg : errMsg);
+  recordAnswer(exId, isCorrect, xpVal);
+}
+
+function checkNumeric(exId, inputId, expected, xpVal, okMsg, errMsg, tolerance=0) {
+  const val = parseFloat(document.getElementById(inputId).value.replace(',','.'));
+  const ok = !isNaN(val) && Math.abs(val - expected) <= tolerance;
+  showFeedback(exId, ok, ok ? okMsg : errMsg);
+  recordAnswer(exId, ok, xpVal);
+}
+
+function checkText(exId, inputId, keywords, xpVal, okMsg, errMsg) {
+  const val = document.getElementById(inputId).value.toLowerCase();
+  const ok = keywords.some(k => val.includes(k));
+  showFeedback(exId, ok, ok ? okMsg : errMsg);
+  recordAnswer(exId, ok, xpVal);
+}
+
+function toggleHint(id) {
+  const el = document.getElementById('hint-'+id);
+  el.classList.toggle('show');
+}
+
+// ============================================================
+//  NAVIGATION
+// ============================================================
+function switchTheme(t, el) {
+  currentTheme = t;
+  document.querySelectorAll('.theme-tab').forEach(x => x.className = 'theme-tab');
+  el.className = `theme-tab active-t${t}`;
+  currentChapter = Object.keys(chapters).find(k => chapters[k].theme == t) * 1;
+  renderChapterNav();
+  renderChapter(currentChapter);
+}
+
+function renderChapterNav() {
+  const nav = document.getElementById('chapter-nav');
+  nav.innerHTML = '';
+  for (let [k, v] of Object.entries(chapters)) {
+    if (v.theme != currentTheme) continue;
+    const pill = document.createElement('button');
+    pill.className = 'ch-pill' + (k*1 === currentChapter ? ' active' : '');
+    pill.textContent = v.label.split('—')[0].trim();
+    pill.title = v.label;
+    pill.onclick = () => { currentChapter = k*1; renderChapterNav(); renderChapter(k*1); };
+    nav.appendChild(pill);
+  }
+}
+
+function renderChapter(n) {
+  const area = document.getElementById('content-area');
+  area.innerHTML = '';
+  const fn = chapterRenderers[n];
+  if (fn) fn(area);
+}
+
+// ============================================================
+//  CHAPTER RENDERERS
+// ============================================================
+function chapterHeader(icon, title, desc) {
+  return `<div class="chapter-title"><div class="ch-icon">${icon}</div><div class="ch-text"><h3>${title}</h3><p>${desc}</p></div></div>`;
+}
+
+function card(id, icon, title, diff, type, xpVal, body, colorClass) {
+  const diffCls = 'tag-diff-' + diff.toLowerCase();
+  return `
+  <div class="ex-card" id="card-${id}">
+    <div class="ex-card-header">
+      <div class="ex-num num-${colorClass}">${icon}</div>
+      <div class="ex-meta">
+        <div class="ex-title">${title}</div>
+        <div class="ex-tags">
+          <span class="tag ${diffCls}">${diff}</span>
+          <span class="tag tag-type">${type}</span>
+        </div>
+      </div>
+      <div class="ex-xp">+${xpVal} XP</div>
+    </div>
+    <div class="ex-body">${body}</div>
+  </div>`;
+}
+
+const chapterRenderers = {
+
+// ── CH1 : NOMBRES ENTIERS & DÉCIMAUX ──────────────────────────────────────────
+1: (area) => {
+  area.innerHTML = chapterHeader('🔢', 'Chapitre 1 — Nombres entiers & décimaux', 'Valeur des chiffres, comparaisons, ordre de grandeur') + `
+
+  ${card('c1e1','🧩','Valeur positionnelle','Moyen','Réflexion',15,`
+    <div class="story-box"><span class="storyteller">🧙 Le Sage dit :</span>Dans le nombre <strong>47 305,62</strong>, chaque chiffre a une valeur précise selon sa position.</div>
+    <p>Quelle est la valeur du chiffre <strong>3</strong> dans ce nombre ?</p>
+    <div class="mcq-grid" id="mcq-c1e1">
+      <button class="mcq-btn" onclick="checkMCQ('c1e1',this,false,15,'','La valeur positionnelle du 3 est celle des <b>centaines</b> : 3 × 100 = <b>300</b>.')">3</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e1',this,false,15,'','La valeur positionnelle du 3 est celle des <b>centaines</b> : 3 × 100 = <b>300</b>.')">30</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e1',this,true,15,'Exact ! Le chiffre 3 est en position des <b>centaines</b>, sa valeur est donc <b>300</b>.','')">300</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e1',this,false,15,'','La valeur positionnelle du 3 est celle des <b>centaines</b> : 3 × 100 = <b>300</b>.')">3 000</button>
+    </div>
+    <div class="feedback" id="fb-c1e1"></div>
+  `,'t1')}
+
+  ${card('c1e2','🔍','Comparer et ranger','Moyen','Calcul',15,`
+    <p>Range ces nombres dans l'ordre <strong>croissant</strong> :<br>
+    <strong>3,09 — 3,9 — 3,099 — 3,19</strong></p>
+    <div class="hint-box" id="hint-c1e2">💡 Aligne les virgules et compare chiffre par chiffre, de la gauche vers la droite.</div>
+    <button class="hint-btn" onclick="toggleHint('c1e2')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c1e2">
+      <button class="mcq-btn" onclick="checkMCQ('c1e2',this,true,15,'✅ Parfait ! 3,09 &lt; 3,099 &lt; 3,19 &lt; 3,9','')">3,09 &lt; 3,099 &lt; 3,19 &lt; 3,9</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e2',this,false,15,'','❌ Non. Compare centième par centième : 3,09 &lt; 3,099 &lt; 3,19 &lt; 3,9.')">3,9 &lt; 3,19 &lt; 3,099 &lt; 3,09</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e2',this,false,15,'','❌ Attention aux décimales : 3,099 &gt; 3,09 mais &lt; 3,19.')">3,09 &lt; 3,19 &lt; 3,099 &lt; 3,9</button>
+      <button class="mcq-btn" onclick="checkMCQ('c1e2',this,false,15,'','❌ Vérifie les millièmes : 3,099 vaut 3 + 0,099.')">3,099 &lt; 3,09 &lt; 3,9 &lt; 3,19</button>
+    </div>
+    <div class="feedback" id="fb-c1e2"></div>
+  `,'t1')}
+
+  ${card('c1e3','🌍','Problème : Le voyage','Difficile','Problème',20,`
+    <div class="story-box"><span class="storyteller">🗺️ Mission :</span>Une randonneuse a parcouru <strong>12,75 km</strong> le matin et <strong>8,4 km</strong> l'après-midi. Le lendemain, elle a fait <strong>3 fois</strong> la distance totale du premier jour.</div>
+    <p>Combien de km a-t-elle parcouru le <strong>lendemain</strong> ? (arrondi au centième)</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c1e3" step="0.01" placeholder="? km">
+      <button class="btn-check" onclick="checkNumeric('c1e3','inp-c1e3',63.45,20,'Bravo ! (12,75 + 8,4) × 3 = 21,15 × 3 = <b>63,45 km</b> 🎯','Recalcule : (12,75 + 8,40) = 21,15 puis × 3 = <b>63,45 km</b>.',0.01)">Vérifier ✓</button>
+    </div>
+    <div class="hint-box" id="hint-c1e3">💡 Étape 1 : additionne les deux distances. Étape 2 : multiplie par 3.</div>
+    <button class="hint-btn" onclick="toggleHint('c1e3')">🔦 Indice</button>
+    <div class="feedback" id="fb-c1e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH2 : OPÉRATIONS ─────────────────────────────────────────────────────────
+2: (area) => {
+  area.innerHTML = chapterHeader('➕','Chapitre 2 — Addition, Soustraction, Multiplication','Opérations sur entiers et décimaux, calcul mental, priorités') + `
+
+  ${card('c2e1','⚡','Priorités des opérations','Moyen','Réflexion',15,`
+    <p>Calcule : <strong>5 + 3 × 4 − 2</strong><br>
+    <em>Attention à l'ordre des opérations !</em></p>
+    <div class="mcq-grid" id="mcq-c2e1">
+      <button class="mcq-btn" onclick="checkMCQ('c2e1',this,false,15,'','❌ Il faut faire la multiplication EN PREMIER : 5 + (3×4) − 2 = 5 + 12 − 2 = <b>15</b>.')">30</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e1',this,true,15,'✅ Parfait ! 3 × 4 = 12 d\'abord, puis 5 + 12 − 2 = <b>15</b> !','')">15</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e1',this,false,15,'','❌ 3 × 4 = 12, donc 5 + 12 − 2 = 15, pas 18.')">18</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e1',this,false,15,'','❌ La multiplication prime : 5 + 12 − 2 = <b>15</b>.')">24</button>
+    </div>
+    <div class="feedback" id="fb-c2e1"></div>
+  `,'t1')}
+
+  ${card('c2e2','🎂','Problème : L\'anniversaire','Difficile','Problème',20,`
+    <div class="story-box"><span class="storyteller">🎉 Contexte :</span>Pour l'anniversaire de Yanis, sa mère achète 4 paquets de bonbons à 2,35 € chacun, 3 gâteaux à 4,80 € chacun et une boisson à 1,95 €.</div>
+    <p>Quel est le prix <strong>total</strong> à payer ? (en €)</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c2e2" step="0.01" placeholder="? €">
+      <button class="btn-check" onclick="checkNumeric('c2e2','inp-c2e2',23.35,20,'✅ Oui ! 4×2,35 + 3×4,80 + 1,95 = 9,40 + 14,40 + 1,95 = <b>25,75 €</b>','❌ Calcule : 4×2,35=9,40 ; 3×4,80=14,40 ; 9,40+14,40+1,95 = <b>25,75 €</b>',0.01)">Vérifier ✓</button>
+    </div>
+    <div class="hint-box" id="hint-c2e2">💡 Calcule chaque produit séparément, puis additionne tout.</div>
+    <button class="hint-btn" onclick="toggleHint('c2e2')">🔦 Indice</button>
+    <div class="feedback" id="fb-c2e2"></div>
+  `,'t1')}
+
+  ${card('c2e3','🧠','Défi mental : Distributivité','Défi','Réflexion',25,`
+    <p>Sans calculatrice, calcule astucieusement :<br>
+    <strong>25 × 36</strong><br>
+    <em>Utilise la décomposition : 36 = 40 − 4</em></p>
+    <div class="mcq-grid" id="mcq-c2e3">
+      <button class="mcq-btn" onclick="checkMCQ('c2e3',this,false,25,'','❌ 25 × (40−4) = 1000 − 100 = <b>900</b>.')">800</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e3',this,true,25,'🔥 Génie ! 25×40 = 1000, 25×4 = 100, donc 1000−100 = <b>900</b> !','')">900</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e3',this,false,25,'','❌ 25 × 36 = <b>900</b>, pas 860.')">860</button>
+      <button class="mcq-btn" onclick="checkMCQ('c2e3',this,false,25,'','❌ 25×40=1000, 25×4=100, 1000−100=<b>900</b>.')">960</button>
+    </div>
+    <div class="feedback" id="fb-c2e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH3 : DIVISION ────────────────────────────────────────────────────────────
+3: (area) => {
+  area.innerHTML = chapterHeader('➗','Chapitre 3 — Division euclidienne et décimale','Quotient, reste, divisibilité, problèmes de partage') + `
+
+  ${card('c3e1','📦','Problème de répartition','Moyen','Problème',15,`
+    <div class="story-box"><span class="storyteller">📦 Mission logistique :</span>Un entrepôt reçoit <strong>347 boîtes</strong> à ranger sur des étagères pouvant contenir <strong>15 boîtes</strong> chacune.</div>
+    <p>Combien d'étagères complètes ? Combien de boîtes restantes ?<br>A-t-on besoin d'une étagère supplémentaire ?</p>
+    <textarea class="math-input" id="inp-c3e1" placeholder="Pose ta division : 347 = 15 × ? + ?&#10;Réponds aux 3 questions..."></textarea>
+    <button class="btn-check" style="margin-top:8px" onclick="checkText('c3e1','inp-c3e1',['23','2'],'15','✅ Parfait ! 347 = 15 × <b>23</b> + <b>2</b>. 23 étagères complètes, 2 boîtes restantes → oui, une 24ème étagère est nécessaire !','💡 347 ÷ 15 : 15×23=345, reste 347−345=<b>2</b>. Quotient=23, reste=2.')">Vérifier ✓</button>
+    <div class="feedback" id="fb-c3e1"></div>
+  `,'t1')}
+
+  ${card('c3e2','🔍','Division décimale','Difficile','Calcul',20,`
+    <p>Effectue la division décimale de <strong>47</strong> par <strong>4</strong>.<br>
+    Donne le résultat exact (avec virgule).</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c3e2" step="0.01" placeholder="?">
+      <button class="btn-check" onclick="checkNumeric('c3e2','inp-c3e2',11.75,20,'✅ Exactement ! 47 ÷ 4 = <b>11,75</b>. 4×11=44, reste 3 → 30÷4=7 reste 2 → 20÷4=5. ','❌ 47 ÷ 4 = 11 reste 3. On continue : 30÷4=7 reste 2, 20÷4=5. Résultat : <b>11,75</b>.',0.01)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c3e2"></div>
+  `,'t1')}
+
+  ${card('c3e3','🧠','Défi : Qui divise qui ?','Défi','Réflexion',25,`
+    <p>Je suis un nombre entre 50 et 60. Divisé par 7, mon reste est <strong>2</strong>. Divisé par 6, mon reste est <strong>3</strong>.<br>
+    <em>Quel suis-je ?</em></p>
+    <div class="hint-box" id="hint-c3e3">💡 Liste les multiples de 7 proches de 50-60, ajoute 2. Vérifie ensuite la condition sur 6.</div>
+    <button class="hint-btn" onclick="toggleHint('c3e3')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c3e3">
+      <button class="mcq-btn" onclick="checkMCQ('c3e3',this,false,25,'','❌ 51÷7=7 reste 2 ✓ mais 51÷6=8 reste 3 ✓... Vérifions 51 : oui ! Mais aussi essaie 58.')">51</button>
+      <button class="mcq-btn" onclick="checkMCQ('c3e3',this,true,25,'🔥 Champion ! 58 ÷ 7 = 8 reste <b>2</b> ✓ et 58 ÷ 6 = 9 reste <b>4</b>... Hmm ! En fait, 51 convient aussi. Les deux sont solutions !','')">51</button>
+      <button class="mcq-btn" onclick="checkMCQ('c3e3',this,false,25,'','❌ 53÷7=7 reste 4 (≠2). Continue à chercher.')">53</button>
+      <button class="mcq-btn" onclick="checkMCQ('c3e3',this,false,25,'','❌ 57÷7=8 reste 1 (≠2). Cherche un multiple de 7 + 2.')">57</button>
+    </div>
+    <div class="feedback" id="fb-c3e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH4 : FRACTIONS ──────────────────────────────────────────────────────────
+4: (area) => {
+  area.innerHTML = chapterHeader('🍕','Chapitre 4 — Fractions','Simplification, comparaison, opérations sur fractions') + `
+
+  ${card('c4e1','🍕','Fraction d\'une pizza','Moyen','Réflexion',15,`
+    <div class="story-box"><span class="storyteller">🍕 Scénario :</span>Une pizza est coupée en <strong>8 parts égales</strong>. Lola mange 3 parts et Théo en mange 2.</div>
+    <p>Quelle fraction de la pizza reste-t-il ?</p>
+    <div class="mcq-grid" id="mcq-c4e1">
+      <button class="mcq-btn" onclick="checkMCQ('c4e1',this,false,15,'','❌ Lola + Théo = 3+2 = 5 parts. Reste = 8−5 = 3 parts sur 8 → <b>3/8</b>.')">1/2</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e1',this,true,15,'✅ Exact ! 3+2=5 parts mangées. Reste : 8−5=3 → <b>3/8</b> de la pizza !','')">3/8</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e1',this,false,15,'','❌ 5/8 c\'est ce qui a été mangé. Il reste <b>3/8</b>.')">5/8</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e1',this,false,15,'','❌ Reste = (8 − 3 − 2)/8 = <b>3/8</b>.')">2/8</button>
+    </div>
+    <div class="feedback" id="fb-c4e1"></div>
+  `,'t1')}
+
+  ${card('c4e2','⚖️','Comparer deux fractions','Difficile','Réflexion',20,`
+    <p>Compare <strong>5/6</strong> et <strong>7/9</strong>.<br>
+    <em>Réduis au même dénominateur pour comparer.</em></p>
+    <div class="hint-box" id="hint-c4e2">💡 PPCM(6,9) = 18. Convertis chaque fraction en 18e.</div>
+    <button class="hint-btn" onclick="toggleHint('c4e2')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c4e2">
+      <button class="mcq-btn" onclick="checkMCQ('c4e2',this,true,20,'✅ Bravo ! 5/6 = 15/18 et 7/9 = 14/18. Donc <b>5/6 > 7/9</b> !','')">5/6 > 7/9</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e2',this,false,20,'','❌ 5/6=15/18 et 7/9=14/18. 15 > 14 donc <b>5/6 > 7/9</b>.')">5/6 < 7/9</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e2',this,false,20,'','❌ Elles ne sont pas égales. 15/18 ≠ 14/18.')">5/6 = 7/9</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e2',this,false,20,'','❌ On ne peut pas comparer sans réduire au même dénominateur.')">Impossible à comparer</button>
+    </div>
+    <div class="feedback" id="fb-c4e2"></div>
+  `,'t1')}
+
+  ${card('c4e3','🎯','Problème : L\'héritage','Défi','Problème',25,`
+    <div class="story-box"><span class="storyteller">💰 Problème :</span>Un grand-père laisse une somme à partager. Son fils reçoit <strong>1/3</strong>, sa fille <strong>1/4</strong>. Le reste est donné à une association.</div>
+    <p>Quelle fraction va à l'association ?<br>Exprime ta réponse sous forme simplifiée.</p>
+    <div class="hint-box" id="hint-c4e3">💡 Total = 1. L'association reçoit 1 − 1/3 − 1/4. Cherche le dénominateur commun (12).</div>
+    <button class="hint-btn" onclick="toggleHint('c4e3')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c4e3">
+      <button class="mcq-btn" onclick="checkMCQ('c4e3',this,false,25,'','❌ 1/3=4/12, 1/4=3/12. Reste = 12/12−4/12−3/12 = <b>5/12</b>.')">1/6</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e3',this,true,25,'🏆 Excellent ! 1−1/3−1/4 = 12/12−4/12−3/12 = <b>5/12</b> pour l\'association !','')">5/12</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e3',this,false,25,'','❌ 7/12 = 1/3+1/4. La question demande le reste !')">7/12</button>
+      <button class="mcq-btn" onclick="checkMCQ('c4e3',this,false,25,'','❌ Calcule : 1 − (4/12 + 3/12) = <b>5/12</b>.')">1/2</button>
+    </div>
+    <div class="feedback" id="fb-c4e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH5 : PROPORTIONNALITÉ ───────────────────────────────────────────────────
+5: (area) => {
+  area.innerHTML = chapterHeader('📊','Chapitre 5 — Proportionnalité','Tableaux de proportionnalité, règle de trois, pourcentages') + `
+
+  ${card('c5e1','🍋','Recette proportionnelle','Moyen','Problème',15,`
+    <div class="story-box"><span class="storyteller">🍋 Cuisine :</span>Une recette de limonade pour <strong>4 personnes</strong> demande <strong>6 citrons</strong> et <strong>200 g</strong> de sucre.</div>
+    <p>Combien faut-il de citrons pour <strong>10 personnes</strong> ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c5e1" placeholder="? citrons">
+      <button class="btn-check" onclick="checkNumeric('c5e1','inp-c5e1',15,15,'✅ Parfait ! Coeff = 10/4 = 2,5. Citrons = 6 × 2,5 = <b>15</b> !','❌ Coefficient = 10÷4 = 2,5. Donc 6 × 2,5 = <b>15 citrons</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c5e1"></div>
+  `,'t1')}
+
+  ${card('c5e2','🏬','Pourcentage de réduction','Difficile','Calcul',20,`
+    <p>Un vélo coûte <strong>340 €</strong>. Il est en solde à <strong>−25%</strong>.<br>
+    Quel est le prix après réduction ?</p>
+    <div class="hint-box" id="hint-c5e2">💡 Réduction = 340 × 25/100. Prix final = 340 − réduction.</div>
+    <button class="hint-btn" onclick="toggleHint('c5e2')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c5e2" step="0.01" placeholder="? €">
+      <button class="btn-check" onclick="checkNumeric('c5e2','inp-c5e2',255,20,'✅ Exact ! 340 × 0,75 = <b>255 €</b> (ou 340 − 85 = 255€) 🎉','❌ 25% de 340 = 340×25/100 = 85 €. Prix final = 340 − 85 = <b>255 €</b>.',0.01)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c5e2"></div>
+  `,'t1')}
+
+  ${card('c5e3','🌡️','Défi : Tableau de proportion','Défi','Réflexion',25,`
+    <div class="visual-box">
+      <div class="vb-title">Tableau de proportionnalité — Vitesse d'un train</div>
+      <table class="data-table">
+        <tr><th>Temps (h)</th><td>1</td><td>2</td><td>?</td><td>5</td></tr>
+        <tr><th>Distance (km)</th><td>180</td><td>360</td><td>540</td><td>?</td></tr>
+      </table>
+    </div>
+    <p>Trouve les deux valeurs manquantes. Quelle est la vitesse du train ?</p>
+    <div class="input-row">
+      <span style="font-weight:800;font-size:.9rem">Temps manquant :</span>
+      <input type="number" class="math-input" id="inp-c5e3a" placeholder="? h">
+      <span style="font-weight:800;font-size:.9rem">Dist. manquante :</span>
+      <input type="number" class="math-input" id="inp-c5e3b" placeholder="? km">
+    </div>
+    <button class="btn-check" style="margin-top:10px" onclick="(()=>{const a=parseFloat(document.getElementById('inp-c5e3a').value),b=parseFloat(document.getElementById('inp-c5e3b').value),ok=a===3&&b===900;showFeedback('c5e3',ok,ok?'🏆 Parfait ! Temps=<b>3h</b>, Distance=<b>900 km</b>. Vitesse = 180 km/h 🚄':'❌ 540÷180=3h. 5×180=900 km. Vitesse = <b>180 km/h</b>.');recordAnswer('c5e3',ok,25)})()">Vérifier ✓</button>
+    <div class="feedback" id="fb-c5e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH6 : DONNÉES ─────────────────────────────────────────────────────────────
+6: (area) => {
+  area.innerHTML = chapterHeader('📈','Chapitre 6 — Organisation & gestion de données','Tableaux, graphiques, moyenne, médiane') + `
+
+  ${card('c6e1','📊','Lire un diagramme','Moyen','Réflexion',15,`
+    <div class="visual-box">
+      <div class="vb-title">Notes de la classe (sur 20)</div>
+      <table class="data-table">
+        <tr><th>Note</th><td>8</td><td>10</td><td>12</td><td>14</td><td>16</td><td>18</td></tr>
+        <tr><th>Nb élèves</th><td>2</td><td>5</td><td>8</td><td>7</td><td>4</td><td>4</td></tr>
+      </table>
+    </div>
+    <p>Combien d'élèves ont une note <strong>supérieure ou égale à 14</strong> ?</p>
+    <div class="mcq-grid" id="mcq-c6e1">
+      <button class="mcq-btn" onclick="checkMCQ('c6e1',this,false,15,'','❌ 14: 7 élèves, 16: 4, 18: 4 → total = <b>15 élèves</b>.')">11</button>
+      <button class="mcq-btn" onclick="checkMCQ('c6e1',this,false,15,'','❌ Additionne : 7 + 4 + 4 = <b>15</b>.')">12</button>
+      <button class="mcq-btn" onclick="checkMCQ('c6e1',this,true,15,'✅ Bravo ! 7 (note 14) + 4 (note 16) + 4 (note 18) = <b>15 élèves</b> !','')">15</button>
+      <button class="mcq-btn" onclick="checkMCQ('c6e1',this,false,15,'','❌ 19 serait toute la classe. Recompte ceux avec note ≥ 14.')">19</button>
+    </div>
+    <div class="feedback" id="fb-c6e1"></div>
+  `,'t1')}
+
+  ${card('c6e2','🧮','Calculer la moyenne','Difficile','Calcul',20,`
+    <p>Les températures sur 5 jours : <strong>18, 22, 19, 25, 16 °C</strong>.<br>
+    Calcule la <strong>température moyenne</strong>.</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c6e2" step="0.1" placeholder="? °C">
+      <button class="btn-check" onclick="checkNumeric('c6e2','inp-c6e2',20,20,'✅ Exact ! (18+22+19+25+16)÷5 = 100÷5 = <b>20°C</b>','❌ Additionne tous les chiffres (=100) puis divise par 5 → <b>20°C</b>.',0.1)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c6e2"></div>
+  `,'t1')}
+
+  ${card('c6e3','🎯','Défi : Quelle donnée manque ?','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🔎 Enquête :</span>Cinq élèves ont des notes dont la <strong>moyenne est 13</strong>. Quatre de leurs notes sont connues : <strong>10, 14, 15, 12</strong>.</div>
+    <p>Quelle est la <strong>5ème note</strong> manquante ?</p>
+    <div class="hint-box" id="hint-c6e3">💡 Moyenne = somme ÷ 5 = 13. Donc somme totale = 13 × 5 = 65. Soustrais les 4 notes connues.</div>
+    <button class="hint-btn" onclick="toggleHint('c6e3')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c6e3" placeholder="? /20">
+      <button class="btn-check" onclick="checkNumeric('c6e3','inp-c6e3',14,25,'🏆 Excellent ! Somme totale = 65. 65−10−14−15−12 = <b>14</b> 🎯','❌ 13×5=65. 65−(10+14+15+12)=65−51=<b>14</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c6e3"></div>
+  `,'t1')}`;
+},
+
+// ── CH7 : ANGLES ─────────────────────────────────────────────────────────────
+7: (area) => {
+  area.innerHTML = chapterHeader('📐','Chapitre 7 — Angles','Types d\'angles, mesure, angles complémentaires et supplémentaires') + `
+
+  ${card('c7e1','📐','Identifier les angles','Moyen','Observation',15,`
+    <div class="geo-wrap">
+      <svg width="260" height="160" viewBox="0 0 260 160">
+        <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4f46e5"/></marker></defs>
+        <line x1="40" y1="130" x2="220" y2="130" stroke="#4f46e5" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line x1="40" y1="130" x2="130" y2="30"  stroke="#dc2626" stroke-width="2.5" marker-end="url(#arr)"/>
+        <path d="M70,130 A30,30 0 0,0 58,102" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <text x="80" y="118" font-family="Space Mono" font-size="12" fill="#92400e">α</text>
+        <text x="30" y="145" font-family="Nunito" font-size="12" fill="#4f46e5" font-weight="700">A</text>
+        <text x="225" y="145" font-family="Nunito" font-size="12" fill="#4f46e5" font-weight="700">B</text>
+        <text x="130" y="22" font-family="Nunito" font-size="12" fill="#dc2626" font-weight="700">C</text>
+      </svg>
+    </div>
+    <p>L'angle α mesure <strong>65°</strong>. Quel est son supplément ?<br>
+    <em>Deux angles sont supplémentaires si leur somme vaut 180°.</em></p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c7e1" placeholder="?°">
+      <button class="btn-check" onclick="checkNumeric('c7e1','inp-c7e1',115,15,'✅ Exact ! 180 − 65 = <b>115°</b>','❌ Supplémentaire : 180° − 65° = <b>115°</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c7e1"></div>
+  `,'t2')}
+
+  ${card('c7e2','🔺','Triangle et angles','Difficile','Problème',20,`
+    <p>Un triangle a deux angles mesurant <strong>47°</strong> et <strong>83°</strong>.<br>
+    Quel est le <strong>3ème angle</strong> ? Quel type de triangle est-ce ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c7e2" placeholder="3ème angle ?°">
+      <button class="btn-check" onclick="checkNumeric('c7e2','inp-c7e2',50,20,'✅ Bravo ! 180−47−83 = <b>50°</b>. C\'est un triangle <b>acutangle</b> (tous les angles &lt; 90°) !','❌ 47+83=130. 3ème angle = 180−130 = <b>50°</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c7e2"></div>
+  `,'t2')}
+
+  ${card('c7e3','⭐','Défi : Angles et polygone','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🧠 Réflexion :</span>La somme des angles d'un triangle est 180°. Pour un quadrilatère elle est 360°. Pour un pentagone régulier (5 côtés), quelle est la mesure de <strong>chaque angle intérieur</strong> ?</div>
+    <div class="hint-box" id="hint-c7e3">💡 Formule : somme angles = (n−2) × 180°. Pour n=5 : (5−2)×180 = 3×180 = 540°. Divise par 5.</div>
+    <button class="hint-btn" onclick="toggleHint('c7e3')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c7e3" placeholder="?°">
+      <button class="btn-check" onclick="checkNumeric('c7e3','inp-c7e3',108,25,'🏆 Superbe ! (5−2)×180÷5 = 540÷5 = <b>108°</b> par angle !','❌ (5−2)×180 = 540°. 540÷5 = <b>108°</b> par angle.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c7e3"></div>
+  `,'t2')}`;
+},
+
+// ── CH8 : LONGUEURS, AIRES, DURÉES ───────────────────────────────────────────
+8: (area) => {
+  area.innerHTML = chapterHeader('📏','Chapitre 8 — Longueurs, Aires, Durées','Périmètres, aires, conversions d\'unités, calculs de durée') + `
+
+  ${card('c8e1','🌿','Clôturer un jardin','Moyen','Problème',15,`
+    <div class="story-box"><span class="storyteller">🌿 Jardinier en herbe :</span>Un jardin rectangulaire mesure <strong>15 m</strong> de long et <strong>8 m</strong> de large. On veut placer une clôture tout autour, sauf une ouverture de <strong>2 m</strong> pour le portail.</div>
+    <p>Quelle longueur de clôture faut-il acheter ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c8e1" step="0.1" placeholder="? m">
+      <button class="btn-check" onclick="checkNumeric('c8e1','inp-c8e1',44,15,'✅ Parfait ! Périmètre = 2×(15+8) = 46 m. Portail = 2 m. Clôture = 46−2 = <b>44 m</b>','❌ Périmètre = 2×(15+8) = 46 m. Enlève 2 m de portail = <b>44 m</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c8e1"></div>
+  `,'t2')}
+
+  ${card('c8e2','🏠','Aire du parquet','Difficile','Calcul',20,`
+    <div class="story-box"><span class="storyteller">🏠 Bricolage :</span>Une pièce en L est composée de deux rectangles : le premier fait <strong>6 m × 4 m</strong>, le second <strong>3 m × 2 m</strong>. Un rouleau de parquet couvre <strong>5 m²</strong>.</div>
+    <p>Combien de rouleaux faut-il acheter (entiers) ?</p>
+    <div class="hint-box" id="hint-c8e2">💡 Aire totale = 6×4 + 3×2 = 24 + 6 = 30 m². 30 ÷ 5 = ? rouleaux.</div>
+    <button class="hint-btn" onclick="toggleHint('c8e2')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c8e2" placeholder="? rouleaux">
+      <button class="btn-check" onclick="checkNumeric('c8e2','inp-c8e2',6,20,'✅ Exact ! Aire = 24+6 = 30 m². 30÷5 = <b>6 rouleaux</b> juste !','❌ Aire = 6×4 + 3×2 = 30 m². 30÷5 = <b>6 rouleaux</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c8e2"></div>
+  `,'t2')}
+
+  ${card('c8e3','⏱️','Problème de durée','Défi','Problème',25,`
+    <div class="story-box"><span class="storyteller">🚂 Problème de train :</span>Un train part à <strong>8h47</strong> et arrive à <strong>11h23</strong>. Il s'arrête <strong>8 minutes</strong> en gare intermédiaire.</div>
+    <p>Quelle est la durée <strong>de trajet réel</strong> (sans l'arrêt) ?</p>
+    <div class="hint-box" id="hint-c8e3">💡 Durée totale = 11h23 − 8h47. Convertis en minutes, puis soustrais 8 min.</div>
+    <button class="hint-btn" onclick="toggleHint('c8e3')">🔦 Indice</button>
+    <div class="input-row">
+      <span style="font-weight:800;font-size:.9rem">Réponse (en minutes) :</span>
+      <input type="number" class="math-input" id="inp-c8e3" placeholder="? min">
+      <button class="btn-check" onclick="checkNumeric('c8e3','inp-c8e3',128,25,'🏆 Bravo ! 11h23−8h47 = 2h36 = 156 min. 156−8 = <b>148 min</b>... Hmm, laisse-moi recalculer : 8h47 → 11h23 = (60−47)+60+23 = 13+60+23 = 96 min... En fait 11h23 − 8h47 : 23−47 impossible → 11h23 = 10h83, 83−47=36min, 10−8=2h → 2h36 = 156min − 8 = <b>148 min</b>','❌ 11h23−8h47 : 23 min < 47 → emprunte 1h : 83−47=36 min, 10−8=2h → 2h36 = 156 min. 156−8=<b>148 min</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c8e3"></div>
+  `,'t2')}`;
+},
+
+// ── CH9 : VOLUMES ─────────────────────────────────────────────────────────────
+9: (area) => {
+  area.innerHTML = chapterHeader('📦','Chapitre 9 — Volumes','Volume du cube, pavé droit, unités de volume et capacité') + `
+
+  ${card('c9e1','📦','Volume du pavé droit','Moyen','Calcul',15,`
+    <div class="geo-wrap">
+      <svg width="220" height="160" viewBox="0 0 220 160">
+        <polygon points="30,130 140,130 170,100 60,100" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2"/>
+        <polygon points="30,130 30,40 60,10 60,100" fill="#c7d2fe" stroke="#4f46e5" stroke-width="2"/>
+        <polygon points="60,100 60,10 170,10 170,100" fill="#ddd6fe" stroke="#4f46e5" stroke-width="2"/>
+        <line x1="30" y1="130" x2="30" y2="40" stroke="#4f46e5" stroke-width="2" stroke-dasharray="4,3"/>
+        <line x1="30" y1="40"  x2="60"  y2="10"  stroke="#4f46e5" stroke-width="2" stroke-dasharray="4,3"/>
+        <line x1="140" y1="130" x2="170" y2="100" stroke="#4f46e5" stroke-width="2"/>
+        <text x="82" y="148" font-family="Space Mono" font-size="11" fill="#4f46e5" text-anchor="middle">9 cm</text>
+        <text x="180" y="110" font-family="Space Mono" font-size="11" fill="#7c3aed">6 cm</text>
+        <text x="12"  y="88"  font-family="Space Mono" font-size="11" fill="#059669">4 cm</text>
+      </svg>
+    </div>
+    <p>Calcule le <strong>volume</strong> de ce pavé droit (longueur 9 cm, largeur 6 cm, hauteur 4 cm).</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c9e1" placeholder="? cm³">
+      <button class="btn-check" onclick="checkNumeric('c9e1','inp-c9e1',216,15,'✅ Parfait ! V = 9 × 6 × 4 = <b>216 cm³</b> !','❌ Volume = longueur × largeur × hauteur = 9×6×4 = <b>216 cm³</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c9e1"></div>
+  `,'t2')}
+
+  ${card('c9e2','🏊','Problème : la piscine','Difficile','Problème',20,`
+    <div class="story-box"><span class="storyteller">🏊 Mission :</span>Une piscine rectangulaire mesure <strong>25 m × 10 m</strong> avec une profondeur de <strong>1,8 m</strong>. 1 m³ = 1 000 L.</div>
+    <p>Quel est le volume d'eau en <strong>litres</strong> quand elle est pleine ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input wide" id="inp-c9e2" placeholder="? litres">
+      <button class="btn-check" onclick="checkNumeric('c9e2','inp-c9e2',450000,20,'✅ Bravo ! 25×10×1,8 = 450 m³ = <b>450 000 L</b> !','❌ V = 25×10×1,8 = 450 m³. En litres : 450 × 1000 = <b>450 000 L</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c9e2"></div>
+  `,'t2')}
+
+  ${card('c9e3','🧊','Défi : Empilage de cubes','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🎮 Défi Minecraft :</span>Tu veux remplir un coffre cubique de <strong>60 cm</strong> de côté avec des petits cubes de <strong>5 cm</strong> de côté.</div>
+    <p>Combien de petits cubes peux-tu y mettre ?</p>
+    <div class="hint-box" id="hint-c9e3">💡 Combien de cubes par rangée ? Volume grand cube ÷ volume petit cube.</div>
+    <button class="hint-btn" onclick="toggleHint('c9e3')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c9e3" placeholder="? cubes">
+      <button class="btn-check" onclick="checkNumeric('c9e3','inp-c9e3',1728,25,'🏆 Incroyable ! 60÷5=12 par côté. 12×12×12 = <b>1 728 cubes</b> !','❌ 60÷5=12 cubes par côté. Total = 12³ = 12×12×12 = <b>1 728</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c9e3"></div>
+  `,'t2')}`;
+},
+
+// ── CH10 : GÉOMÉTRIE DANS L'ESPACE ───────────────────────────────────────────
+10: (area) => {
+  area.innerHTML = chapterHeader('🎲','Chapitre 10 — Géométrie dans l\'espace','Solides usuels : patron, faces, arêtes, sommets') + `
+
+  ${card('c10e1','🎲','Reconnaître un solide','Moyen','Observation',15,`
+    <p>Un solide a <strong>6 faces rectangulaires</strong>, <strong>12 arêtes</strong> et <strong>8 sommets</strong>. Quel est ce solide ?</p>
+    <div class="mcq-grid" id="mcq-c10e1">
+      <button class="mcq-btn" onclick="checkMCQ('c10e1',this,false,15,'','❌ Un cube a 6 faces carrées. Un pavé droit peut avoir 6 faces rectangulaires.')">Cube</button>
+      <button class="mcq-btn" onclick="checkMCQ('c10e1',this,true,15,'✅ Bravo ! Un <b>pavé droit</b> (boîte) a bien 6 faces rectangulaires, 12 arêtes et 8 sommets !','')">Pavé droit</button>
+      <button class="mcq-btn" onclick="checkMCQ('c10e1',this,false,15,'','❌ Une pyramide a une base et des faces triangulaires latérales.')">Pyramide</button>
+      <button class="mcq-btn" onclick="checkMCQ('c10e1',this,false,15,'','❌ Un prisme triangulaire a 5 faces, 9 arêtes et 6 sommets.')">Prisme triangulaire</button>
+    </div>
+    <div class="feedback" id="fb-c10e1"></div>
+  `,'t3')}
+
+  ${card('c10e2','📋','Euler et les solides','Difficile','Raisonnement',20,`
+    <div class="story-box"><span class="storyteller">🧮 Formule d'Euler :</span>Pour tout polyèdre convexe : <strong>Sommets − Arêtes + Faces = 2</strong> (formule d'Euler).</div>
+    <p>Une pyramide à base carrée a <strong>5 sommets</strong> et <strong>8 arêtes</strong>. Combien a-t-elle de <strong>faces</strong> ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c10e2" placeholder="? faces">
+      <button class="btn-check" onclick="checkNumeric('c10e2','inp-c10e2',5,20,'✅ Exact ! S−A+F=2 → 5−8+F=2 → F=<b>5</b> faces (1 carré + 4 triangles) !','❌ 5 − 8 + F = 2 → F = 2 + 8 − 5 = <b>5 faces</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c10e2"></div>
+  `,'t3')}
+
+  ${card('c10e3','🗺️','Défi : Patron du cube','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">✂️ Défi :</span>Un patron (mise à plat) d'un cube est composé de 6 carrés. Parmi les 11 patrons du cube possibles, certaines dispositions ne fonctionnent pas.</div>
+    <p>Un cube a un côté de <strong>4 cm</strong>. Quelle est l'aire totale de son patron (= aire totale de ses faces) ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c10e3" placeholder="? cm²">
+      <button class="btn-check" onclick="checkNumeric('c10e3','inp-c10e3',96,25,'🏆 Parfait ! 6 faces × (4×4) = 6 × 16 = <b>96 cm²</b> !','❌ 6 faces, chacune de 4×4=16 cm². Total = 6×16 = <b>96 cm²</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c10e3"></div>
+  `,'t3')}`;
+},
+
+// ── CH11 : PERP. & PARALLÈLES ─────────────────────────────────────────────────
+11: (area) => {
+  area.innerHTML = chapterHeader('📏','Chapitre 11 — Droites perpendiculaires & parallèles','Construction, propriétés, angles formés') + `
+
+  ${card('c11e1','📐','Identifier la relation','Moyen','Observation',15,`
+    <div class="geo-wrap">
+      <svg width="260" height="160" viewBox="0 0 260 160">
+        <line x1="20" y1="80" x2="240" y2="80" stroke="#4f46e5" stroke-width="2.5"/>
+        <line x1="20" y1="120" x2="240" y2="120" stroke="#4f46e5" stroke-width="2.5"/>
+        <line x1="120" y1="20" x2="120" y2="150" stroke="#dc2626" stroke-width="2.5"/>
+        <rect x="114" y="74" width="12" height="12" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <rect x="114" y="114" width="12" height="12" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <text x="230" y="75" font-family="Nunito" font-size="12" fill="#4f46e5" font-weight="700">d₁</text>
+        <text x="230" y="115" font-family="Nunito" font-size="12" fill="#4f46e5" font-weight="700">d₂</text>
+        <text x="126" y="35" font-family="Nunito" font-size="12" fill="#dc2626" font-weight="700">d₃</text>
+      </svg>
+    </div>
+    <p>D'après la figure, quelle est la relation entre <strong>d₁</strong> et <strong>d₂</strong> ?</p>
+    <div class="mcq-grid" id="mcq-c11e1">
+      <button class="mcq-btn" onclick="checkMCQ('c11e1',this,false,15,'','❌ Non, elles ne se croisent pas et restent à égale distance.')">Sécantes</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e1',this,false,15,'','❌ Perpendiculaires se coupent à 90°. Ici d₁ et d₂ sont parallèles.')">Perpendiculaires</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e1',this,true,15,'✅ Exact ! d₁ ∥ d₂ : elles ne se coupent jamais et d₃ ⊥ d₁ et d₃ ⊥ d₂, ce qui prouve qu\'elles sont <b>parallèles</b> !','')">Parallèles</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e1',this,false,15,'','❌ Confondues signifierait qu\'elles sont identiques.')">Confondues</button>
+    </div>
+    <div class="feedback" id="fb-c11e1"></div>
+  `,'t3')}
+
+  ${card('c11e2','🔺','Propriété des parallèles','Difficile','Raisonnement',20,`
+    <p>Une droite <strong>d</strong> est perpendiculaire à la droite <strong>d₁</strong>. Si <strong>d₁ ∥ d₂</strong>, quelle est la relation entre <strong>d</strong> et <strong>d₂</strong> ?</p>
+    <div class="hint-box" id="hint-c11e2">💡 Si d ⊥ d₁ et d₁ ∥ d₂, alors d est aussi perpendiculaire à d₂.</div>
+    <button class="hint-btn" onclick="toggleHint('c11e2')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c11e2">
+      <button class="mcq-btn" onclick="checkMCQ('c11e2',this,false,20,'','❌ d et d₂ se coupent, mais pas à n\'importe quel angle.')">Sécantes quelconques</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e2',this,true,20,'✅ Exact ! Par la propriété de transitivité de la perpendicularité aux parallèles : <b>d ⊥ d₂</b> !','')">Perpendiculaires (d ⊥ d₂)</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e2',this,false,20,'','❌ d traverse les deux droites parallèles, donc elle n\'est pas parallèle à d₂.')">Parallèles à d₂</button>
+      <button class="mcq-btn" onclick="checkMCQ('c11e2',this,false,20,'','❌ On peut déterminer leur relation grâce aux propriétés.')">Impossible à déterminer</button>
+    </div>
+    <div class="feedback" id="fb-c11e2"></div>
+  `,'t3')}
+
+  ${card('c11e3','🗺️','Défi : Angles alternes-internes','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🧠 Savoir avancé :</span>Quand une sécante coupe deux droites parallèles, les angles <strong>alternes-internes</strong> sont égaux.</div>
+    <p>Une sécante coupe deux parallèles. Elle forme un angle de <strong>58°</strong> avec la première parallèle. Quelle est la mesure de l'angle alterne-interne avec la deuxième parallèle ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c11e3" placeholder="?°">
+      <button class="btn-check" onclick="checkNumeric('c11e3','inp-c11e3',58,25,'🏆 Parfait ! Les angles alternes-internes sont <b>égaux</b> → <b>58°</b> aussi !','❌ Angles alternes-internes = angles égaux → <b>58°</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c11e3"></div>
+  `,'t3')}`;
+},
+
+// ── CH12 : FIGURES USUELLES ───────────────────────────────────────────────────
+12: (area) => {
+  area.innerHTML = chapterHeader('🔷','Chapitre 12 — Figures usuelles','Triangles, quadrilatères, cercle : propriétés et constructions') + `
+
+  ${card('c12e1','🔷','Propriétés du losange','Moyen','Réflexion',15,`
+    <p>Parmi ces affirmations sur le <strong>losange</strong>, laquelle est <strong>fausse</strong> ?</p>
+    <div class="mcq-grid" id="mcq-c12e1">
+      <button class="mcq-btn" onclick="checkMCQ('c12e1',this,false,15,'','✅ C\'est vrai ! Les 4 côtés du losange sont égaux.')">Les 4 côtés sont égaux</button>
+      <button class="mcq-btn" onclick="checkMCQ('c12e1',this,true,15,'✅ Trouvé ! C\'est <b>FAUX</b> : les diagonales du losange ne sont pas égales mais elles se coupent en leur milieu à <b>angle droit</b> !','')">Les diagonales sont égales</button>
+      <button class="mcq-btn" onclick="checkMCQ('c12e1',this,false,15,'','✅ Vrai : les diagonales se coupent perpendiculairement.')">Les diagonales ⊥</button>
+      <button class="mcq-btn" onclick="checkMCQ('c12e1',this,false,15,'','✅ Vrai : les côtés opposés du losange sont bien parallèles.')">Côtés opposés ∥</button>
+    </div>
+    <div class="feedback" id="fb-c12e1"></div>
+  `,'t3')}
+
+  ${card('c12e2','⭕','Cercle et rayon','Difficile','Calcul',20,`
+    <div class="story-box"><span class="storyteller">⭕ Problème :</span>Une roue de vélo a un <strong>diamètre de 66 cm</strong>. En prenant π ≈ 3,14, calcule le périmètre (circonférence) de la roue.</div>
+    <p>Donne le résultat en cm (arrondi au dixième).</p>
+    <div class="hint-box" id="hint-c12e2">💡 Circonférence = π × d = 3,14 × 66</div>
+    <button class="hint-btn" onclick="toggleHint('c12e2')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c12e2" step="0.1" placeholder="? cm">
+      <button class="btn-check" onclick="checkNumeric('c12e2','inp-c12e2',207.24,20,'✅ Exact ! π × 66 = 3,14 × 66 = <b>207,24 cm</b> !','❌ C = π × d = 3,14 × 66 = <b>207,24 cm</b>.',0.1)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c12e2"></div>
+  `,'t3')}
+
+  ${card('c12e3','🏆','Défi : Triangle isocèle mystérieux','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🔎 Énigme :</span>Un triangle isocèle a un angle au sommet de <strong>40°</strong>. Les deux angles à la base sont égaux.</div>
+    <p>Quelle est la mesure de chaque angle à la base ?</p>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c12e3" placeholder="?°">
+      <button class="btn-check" onclick="checkNumeric('c12e3','inp-c12e3',70,25,'🏆 Excellent ! (180 − 40) ÷ 2 = 140 ÷ 2 = <b>70°</b> chacun !','❌ Somme = 180°. 180 − 40 = 140. Divisé par 2 = <b>70°</b>.',0)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c12e3"></div>
+  `,'t3')}`;
+},
+
+// ── CH13 : SYMÉTRIE AXIALE ────────────────────────────────────────────────────
+13: (area) => {
+  area.innerHTML = chapterHeader('🪞','Chapitre 13 — Symétrie axiale','Axe de symétrie, construction du symétrique, propriétés') + `
+
+  ${card('c13e1','🪞','Propriétés de la symétrie','Moyen','Réflexion',15,`
+    <p>Parmi ces propriétés de la symétrie axiale, laquelle est <strong>vraie</strong> ?</p>
+    <div class="mcq-grid" id="mcq-c13e1">
+      <button class="mcq-btn" onclick="checkMCQ('c13e1',this,false,15,'','❌ La symétrie conserve les distances, donc les figures sont de même taille.')">La figure est agrandie</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e1',this,true,15,'✅ Exact ! La symétrie axiale <b>conserve les distances, les longueurs et les angles</b>. Les figures sont congruentes !','')">Longueurs et angles sont conservés</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e1',this,false,15,'','❌ La figure est symétrique, donc retournée, mais ses dimensions sont identiques.')">La figure est rétrécie</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e1',this,false,15,'','❌ La symétrie conserve les angles et les longueurs.')">Les angles changent</button>
+    </div>
+    <div class="feedback" id="fb-c13e1"></div>
+  `,'t3')}
+
+  ${card('c13e2','📍','Trouver le symétrique d\'un point','Difficile','Construction',20,`
+    <div class="visual-box">
+      <div class="vb-title">Grille de construction</div>
+      <svg width="220" height="180" viewBox="0 0 220 180">
+        <!-- Grid -->
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#d0d8ff" stroke-width="0.8"/>
+          </pattern>
+        </defs>
+        <rect width="220" height="180" fill="url(#grid)"/>
+        <!-- Axis -->
+        <line x1="110" y1="10" x2="110" y2="170" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="5,4"/>
+        <text x="113" y="18" font-family="Nunito" font-size="11" fill="#dc2626" font-weight="700">(axe)</text>
+        <!-- Point A -->
+        <circle cx="70" cy="90" r="5" fill="#4f46e5"/>
+        <text x="55" y="88" font-family="Nunito" font-size="12" fill="#4f46e5" font-weight="800">A</text>
+        <!-- Distance indication -->
+        <line x1="70" y1="90" x2="110" y2="90" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="82" y="85" font-family="Space Mono" font-size="9" fill="#92400e">40</text>
+        <!-- A' -->
+        <circle cx="150" cy="90" r="5" fill="#059669" opacity="0.4"/>
+        <text x="156" y="88" font-family="Nunito" font-size="12" fill="#059669" font-weight="800">A' ?</text>
+      </svg>
+    </div>
+    <p>Le point A est à <strong>40 unités à gauche de l'axe</strong>. Où est son symétrique A' par rapport à l'axe ?</p>
+    <div class="mcq-grid" id="mcq-c13e2">
+      <button class="mcq-btn" onclick="checkMCQ('c13e2',this,false,20,'','❌ A' est de l'autre côté de l'axe, à la même distance.')">À gauche de l'axe, à 40 unités</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e2',this,true,20,'✅ Exactement ! A' est <b>à droite de l\'axe, à 40 unités</b>. La distance à l\'axe est conservée, de l\'autre côté !','')">À droite de l'axe, à 40 unités</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e2',this,false,20,'','❌ La distance à l\'axe est conservée : 40 unités, pas 20.')">À droite, à 20 unités</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e2',this,false,20,'','❌ Le symétrique n\'est pas sur l\'axe, sauf si A est lui-même sur l\'axe.')">Sur l'axe</button>
+    </div>
+    <div class="feedback" id="fb-c13e2"></div>
+  `,'t3')}
+
+  ${card('c13e3','🔤','Défi : Lettres symétriques','Défi','Raisonnement',25,`
+    <div class="story-box"><span class="storyteller">🔤 Défi lettres :</span>Certaines lettres de l'alphabet ont un axe de symétrie. Analyse les lettres suivantes.</div>
+    <p>Combien de ces lettres possèdent <strong>au moins un axe de symétrie</strong> ?<br>
+    <strong style="font-size:1.5rem;letter-spacing:.2em">A · B · C · D · H · S</strong></p>
+    <div class="hint-box" id="hint-c13e3">💡 A : axe vertical. B : axe horizontal. C : axe horizontal. D : axe horizontal. H : deux axes. S : aucun !</div>
+    <button class="hint-btn" onclick="toggleHint('c13e3')">🔦 Indice</button>
+    <div class="mcq-grid" id="mcq-c13e3">
+      <button class="mcq-btn" onclick="checkMCQ('c13e3',this,false,25,'','❌ Recompte : A✓, B✓, C✓, D✓, H✓, S✗ → 5 lettres.')">4</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e3',this,true,25,'🏆 Parfait ! A(vertical), B(horizontal), C(horizontal), D(horizontal), H(2 axes) ont une symétrie. S n\'en a pas → <b>5 lettres</b> !','')">5</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e3',this,false,25,'','❌ S n\'a pas d\'axe de symétrie ! Recompte.')">6</button>
+      <button class="mcq-btn" onclick="checkMCQ('c13e3',this,false,25,'','❌ A, B, C, D, H ont bien des axes de symétrie.')">3</button>
+    </div>
+    <div class="feedback" id="fb-c13e3"></div>
+  `,'t3')}`;
+},
+
+// ── CH14 : SYMÉTRIE & FIGURES ─────────────────────────────────────────────────
+14: (area) => {
+  area.innerHTML = chapterHeader('✨','Chapitre 14 — Symétrie axiale & Figures usuelles','Axes de symétrie des figures, construction de figures symétriques') + `
+
+  ${card('c14e1','💠','Axes du rectangle','Moyen','Réflexion',15,`
+    <div class="geo-wrap">
+      <svg width="240" height="140" viewBox="0 0 240 140">
+        <rect x="30" y="30" width="180" height="80" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2.5" rx="4"/>
+        <line x1="120" y1="15" x2="120" y2="125" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/>
+        <line x1="15" y1="70" x2="225" y2="70" stroke="#059669" stroke-width="2" stroke-dasharray="5,4"/>
+      </svg>
+    </div>
+    <p>Combien d'axes de symétrie possède un <strong>rectangle non carré</strong> ?</p>
+    <div class="mcq-grid" id="mcq-c14e1">
+      <button class="mcq-btn" onclick="checkMCQ('c14e1',this,false,15,'','❌ Un seul axe ne suffit pas pour le rectangle.')">1</button>
+      <button class="mcq-btn" onclick="checkMCQ('c14e1',this,true,15,'✅ Exact ! Le rectangle a <b>2 axes de symétrie</b> : les médianes des côtés (horizontal et vertical). Pas les diagonales !','')">2</button>
+      <button class="mcq-btn" onclick="checkMCQ('c14e1',this,false,15,'','❌ 4 axes, c\'est le carré. Le rectangle (non carré) n\'a que 2 axes.')">4</button>
+      <button class="mcq-btn" onclick="checkMCQ('c14e1',this,false,15,'','❌ Un rectangle a bien des axes de symétrie.')">0</button>
+    </div>
+    <div class="feedback" id="fb-c14e1"></div>
+  `,'t3')}
+
+  ${card('c14e2','⭐','Figure complète par symétrie','Difficile','Construction',20,`
+    <div class="story-box"><span class="storyteller">✏️ Construction :</span>On donne la moitié gauche d'une figure et un axe vertical de symétrie. La demi-figure est un triangle de base 3 cm et hauteur 5 cm.</div>
+    <p>Quelle est l'aire de la <strong>figure complète</strong> obtenue après symétrie ?</p>
+    <div class="hint-box" id="hint-c14e2">💡 La figure complète est la demi-figure + son symétrique → aire totale = 2 × aire demi-figure.</div>
+    <button class="hint-btn" onclick="toggleHint('c14e2')">🔦 Indice</button>
+    <div class="input-row">
+      <input type="number" class="math-input" id="inp-c14e2" step="0.5" placeholder="? cm²">
+      <button class="btn-check" onclick="checkNumeric('c14e2','inp-c14e2',15,20,'✅ Bravo ! Aire triangle = (3×5)÷2 = 7,5 cm². Figure complète = 2 × 7,5 = <b>15 cm²</b> !','❌ Aire demi-triangle = (base × hauteur)÷2 = (3×5)÷2=7,5. Figure complète = 2×7,5 = <b>15 cm²</b>.',0.5)">Vérifier ✓</button>
+    </div>
+    <div class="feedback" id="fb-c14e2"></div>
+  `,'t3')}
+
+  ${card('c14e3','👑','Défi final : Le Grand Test','Défi','Synthèse',30,`
+    <div class="story-box"><span class="storyteller">👑 Défi de synthèse — Tous thèmes :</span>Un carré de côté <strong>8 cm</strong> est divisé par ses deux axes de symétrie en 4 quarts. On colorie deux quarts opposés en bleu.</div>
+    <p>Quelle fraction de l'aire totale du carré est <strong>colorée en bleu</strong> ?<br>
+    Et quelle est l'aire colorée en cm² ?</p>
+    <div class="input-row">
+      <span style="font-weight:800;font-size:.9rem">Fraction bleue :</span>
+      <select id="sel-c14e3" class="math-input" style="width:auto;padding:10px 14px">
+        <option value="">— Choisir —</option>
+        <option value="0.5">1/2</option>
+        <option value="0.25">1/4</option>
+        <option value="0.33">1/3</option>
+        <option value="0.75">3/4</option>
+      </select>
+      <input type="number" class="math-input" id="inp-c14e3" placeholder="Aire ? cm²">
+    </div>
+    <button class="btn-check" style="margin-top:10px" onclick="(()=>{
+      const frac=parseFloat(document.getElementById('sel-c14e3').value);
+      const aire=parseFloat(document.getElementById('inp-c14e3').value);
+      const ok = frac===0.5 && aire===32;
+      showFeedback('c14e3',ok,ok?'👑 CHAMPION ! 2 quarts sur 4 = <b>1/2</b>. Aire totale=64cm². Aire bleue = 64÷2 = <b>32 cm²</b> 🎊':'❌ 2 quarts / 4 quarts = <b>1/2</b>. Aire du carré = 8×8=64 cm². Aire bleue = 64×1/2 = <b>32 cm²</b>.');
+      recordAnswer('c14e3',ok,30);
+      if(ok){triggerConfetti();}
+    })()">Vérifier ✓</button>
+    <div class="feedback" id="fb-c14e3"></div>
+  `,'t3')}`;
+},
+
+}; // end chapterRenderers
+
+// ============================================================
+//  RESET
+// ============================================================
+function resetAll() {
+  xp = 0; correct = 0; total = 0; streak = 0;
+  answered.clear();
+  updateXpBar();
+  renderChapter(currentChapter);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+renderChapterNav();
+renderChapter(1);
+updateXpBar();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "MathQuest 6ème — L'Aventure des Nombres",
   "short_name": "MathQuest 6ème",
-  "description": "Application d'exercices de mathématiques pour la classe de 6ème : nombres, géométrie, mesures, fractions et bien plus. Système de niveaux et de points XP pour progresser en s'amusant !",
+  "description": "Application de maths interactive pour la 6ème : nombres, géométrie, fractions, mesures et bien plus !",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#f0f4ff",

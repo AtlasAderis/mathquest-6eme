@@ -1,39 +1,22 @@
 {
-  "name": "MathQuest 6ème — L'Aventure des Nombres",
-  "short_name": "MathQuest 6ème",
-  "description": "Application de maths interactive pour la 6ème : nombres, géométrie, fractions, mesures et bien plus !",
-  "start_url": "/index.html",
+  "name": "MathQuest 6eme - L'Aventure des Nombres",
+  "short_name": "MathQuest",
+  "description": "Exercices de maths interactifs pour la 6eme",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f0f4ff",
   "theme_color": "#4f46e5",
-  "orientation": "portrait",
   "lang": "fr",
-  "categories": ["education", "kids"],
   "icons": [
-    { "src": "icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ],
-  "shortcuts": [
-    { "name": "Nombres & Calcul",    "url": "/index.html?theme=1", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] },
-    { "name": "Grandeurs & Mesures", "url": "/index.html?theme=2", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] },
-    { "name": "Espace & Géométrie",  "url": "/index.html?theme=3", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
-```
-
-**4.** Descends tout en bas → clique le bouton vert **"Commit new file"**
-
-✅ `manifest.json` est créé !
-
----
-
-### ⚙️ CRÉER `service-worker.js`
-
-**1.** Reclique **"Add file"** → **"Create new file"**
-
-**2.** Dans le nom, tape exactement :
-```
-service-worker.js
